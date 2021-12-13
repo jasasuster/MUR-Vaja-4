@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/tripledes.js"></script>
+
+  <head>
+    <title>MUR Vaja 4 - Hibridno šifriranje</title>
+    <style>
+      body { background: rgb(48,48,48); margin: 20px; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      #center { float: top; display: block; background: rgba(0, 0, 0, 0.15); margin: auto; width: 50%; height: 50%;}
+      #form { margin: auto; background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: sticky; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box;}
+      #input { border: none; padding: 0 1rem; flex-grow: 1; border-radius: 2rem; margin: 0.25rem; }
+      #input:focus { outline: none; }
+      #form > button { background: #333; border: none; padding: 0 1rem; margin: 0.25rem; border-radius: 3px; outline: none; color: #fff; }
+      #ulDiv { height: 60%; overflow: auto; }
+      #funcs { position: sticky; display: block; background: rgba(0, 0, 10, 0.15); margin: auto; width: 100%; height: 20%; }
+
+      #messages { list-style-type: none; margin: 0; padding: 0; background: #efefef; }
+      #messages > li { padding: 0.5rem 1rem; }
+      #messages > li:nth-child(odd) { background: rgba(0, 0, 0, 0.15); } 
+      
+      .vertical-center { overflow: auto; margin: 0; position: absolute; top: 30%; left: 25%; -ms-transform: translateY(-50%); transform: translateY(-50%); }
+    </style>
+  </head>
+
+  <body>
+    <div id="center" class="vertical-center">
+      <div id="ulDiv">
+      <ul id="messages"></ul>
+      </div>      
+      <div id="funcs" class="vertical-center"> <!-- funkcionalnosti -->
+        <from id="form" action="">          
+          <input id="input" autocomplete="off"/><button>Connect</button><br>
+        </from>  
+        <form id="form1">          
+          <input type="file" id="file" name="myfile"><br><br>
+          <input type="submit" id="submitFile">
+        </form>
+      </div>
+    </div>
+  </body>
+
+  <script src="socket.io.js"></script>
+  <script src="socket.io-file-client.js"></script>
+      <script src="/socket.io/socket.io.js"></script>
+
+      <script>  
+        var key = "Jasa";  
+        var socket = io();
+        var input = document.getElementById('input');
+        var form = document.getElementById('form');
+        var uploader = new SocketIOFileClient(socket);
+
+        function encrypt(str) {
+          return CryptoJS.TripleDES
+        }
+
+        //append new message to UL
+        function addMessage(msg) {
+          var item = document.createElement('li');
+          var d1 = document.createElement('div');
+          var d2 = document.createElement('div');
+          var date = new Date();
+          d2.innerHTML = date.getHours().toString()+':'+date.getMinutes().toString()+':'+date.getSeconds().toString();
+          d1.innerHTML = msg;
+          d1.setAttribute("display", "inline"); 
+          d1.setAttribute("width", "80%");          
+          d2.setAttribute("display", "inline");
+          d2.setAttribute("width", "20%");      
+          item.appendChild(d1);
+          item.appendChild(d2);
+          messages.appendChild(item);
+          var elem = document.getElementById("ulDiv");  //auto scroll to bottom
+          elem.scrollTop = elem.scrollHeight;
+        };
+
+        //input username and check input status
+        /*window.onload = () => {
+          let text, inputStatus;
+          let username = prompt("Prosim vnesite svoje ime: ");
+          if (username == null || username == ""){
+            text = "User cancelled the prompt.";
+            inputStatus = false;
+            addMessage(text);
+            var newText = CryptoJS.TripleDES.encrypt(text, key).toString();
+            socket.emit('chat message', newText);
+            return;
+          }
+          else {
+            text = username;
+            inputStatus = true;            
+            addMessage(`Pridružili ste se pogovoru.`);
+          }
+          var newUsername = CryptoJS.TripleDES.encrypt(username, key).toString(CryptoJS.enc.Utf8);
+          socket.emit('add user', username);
+          text="";
+
+          if(inputStatus)
+            document.getElementById("input").removeAttribute("disabled");
+        }*/
+
+        uploader.on('ready', function () {
+            console.log('SocketIOFile ready to go!');
+        });
+        uploader.on('loadstart', function () {
+            console.log('Loading file to browser before sending...');
+        });
+        /*uploader.on('progress', function (progress) {
+            console.log('Loaded ' + progress.loaded + ' / ' + progress.total);
+        });*/
+        uploader.on('start', function (fileInfo) {
+            console.log('Start uploading', fileInfo);
+        });
+        /*uploader.on('stream', function (fileInfo) {
+            console.log('Streaming... sent ' + fileInfo.sent + ' bytes.');
+        });*/
+        uploader.on('complete', function (fileInfo) {
+            console.log('Upload Complete', fileInfo);
+        });
+        uploader.on('error', function (err) {
+            console.log('Error!', err);
+        });
+        uploader.on('abort', function (fileInfo) {
+            console.log('Aborted: ', fileInfo);
+        });
+
+        //send on submit
+        form.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (input.value) {
+            addMessage(`Connected on port ${input.value}`);
+            var msg = CryptoJS.TripleDES.encrypt(input.value, key).toString();
+            //console.log(`encrypted chat message: ${msg}`);
+            socket.emit('client', input.value);  //pošljemo port
+            input.value = '';
+            document.getElementById("input").setAttribute("disabled", "");
+          }
+        });
+
+        document.getElementById('submitFile').addEventListener('click', function(e) {
+          e.preventDefault();
+          var fileUpload = document.getElementById('file');
+          var upload = uploader.upload(fileUpload.files);
+        });
+
+        //add message to chat
+        socket.on('message', msg => {
+          console.log(`message ${msg}`);
+          addMessage(msg);
+        });
+
+        socket.on('download-link', (file) => {
+          addMessage("File was downloaded to your download directory");
+          /*console.log(file);
+          //document.getElementById('funcs').append('<p><button><a href="' + file.link + '>Prenesite ' + file.name + '</a></button></p>');
+          var item = document.createElement('li');
+          var d1 = document.createElement('div');
+          var d2 = document.createElement('div');
+          l1.setAttribute('src', file.link);
+          l1.innerHTML = 'Prenesite ' + file.name;
+          item.appendChild(d1);
+          item.appendChild(d2);
+          item.appendChild(l1);
+          messages.appendChild(item);
+          /*d1.setAttribute('src', file.link);
+          d1.innerHTML = 'Prenesite ' + file.name;
+          document.getElementById('funcs').appendChild(d1);*/
+        })
+
+        /*socket.on('chat message', function(msg) {
+          var item = document.createElement('li');
+          item.innerHTML = msg;
+          messages.appendChild(item);
+          elem.scrollTop = elem.scrollHeight;
+        });*/
+      </script>
+</html>

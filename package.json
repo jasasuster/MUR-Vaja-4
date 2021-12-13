@@ -1,0 +1,26 @@
+{
+  "name": "vaja02",
+  "version": "1.0.0",
+  "description": "\"\"",
+  "main": "index.js",
+  "scripts": {
+    "test": "\"echo \\\"Error: no test specified\\\" && exit 1\"",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "author": "\"jasa\"",
+  "license": "ISC",
+  "dependencies": {
+    "chessops": "^0.10.3",
+    "crypto-js": "^4.1.1",
+    "express": "^4.17.1",
+    "http": "^0.0.1-security",
+    "kokopu": "^2.2.0",
+    "socket.io": "^4.3.1",
+    "socket.io-client": "^4.4.0",
+    "socket.io-file": "^2.0.31",
+    "socket.io-file-client": "^2.0.2",
+    "socket.io-p2p": "^2.2.0",
+    "socket.io-p2p-server": "^1.2.0"
+  }
+}
